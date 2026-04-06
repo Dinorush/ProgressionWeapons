@@ -9,7 +9,7 @@ namespace ProgressionGear.Utils
             string itemInstanceId = gearIDRange.PlayfabItemInstanceId;
             if (!itemInstanceId.Contains("OfflineGear_ID_"))
             {
-                PWLogger.Error($"Find PlayfabItemInstanceId without substring 'OfflineGear_ID_'! {itemInstanceId}");
+                DinoLogger.Error($"Find PlayfabItemInstanceId without substring 'OfflineGear_ID_'! {itemInstanceId}");
                 return 0;
             }
 
@@ -20,7 +20,7 @@ namespace ProgressionGear.Utils
             }
             catch
             {
-                PWLogger.Error("Caught exception while trying to parse persistentID of PlayerOfflineGearDB from GearIDRange, which means itemInstanceId could be ill-formated");
+                DinoLogger.Error("Caught exception while trying to parse persistentID of PlayerOfflineGearDB from GearIDRange, which means itemInstanceId could be ill-formated");
                 return 0;
             }
         }

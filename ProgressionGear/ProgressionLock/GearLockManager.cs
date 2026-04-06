@@ -99,7 +99,7 @@ namespace ProgressionGear.ProgressionLock
 
                 if (loadedGears.Count == 0)
                 {
-                    PWLogger.Debug($"No gear has been loaded for {inventorySlot}.");
+                    DinoLogger.Debug($"No gear has been loaded for {inventorySlot}.");
                     continue;
                 }
 
@@ -117,8 +117,7 @@ namespace ProgressionGear.ProgressionLock
 
                 if (vanillaSlot.Count == 0)
                 {
-                    PWLogger.Error($"No gear is allowed for {inventorySlot}, there must be at least 1 allowed gear!");
-                    vanillaSlot.Add(loadedGears.First().Value);
+                    DinoLogger.Warning($"No gear is allowed for {inventorySlot}!");
                 }
             }
         }
@@ -141,7 +140,7 @@ namespace ProgressionGear.ProgressionLock
                 }
                 catch (Il2CppInterop.Runtime.Il2CppException e)
                 {
-                    PWLogger.Error("Error attempting to equip gear for slot " + inventorySlot + ":\n" + e.StackTrace);
+                    DinoLogger.Error("Error attempting to equip gear for slot " + inventorySlot + ":\n" + e.StackTrace);
                 }
             }
         }

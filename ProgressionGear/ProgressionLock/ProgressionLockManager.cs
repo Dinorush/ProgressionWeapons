@@ -19,7 +19,7 @@ namespace ProgressionGear.ProgressionLock
 
         private void FileChanged(LiveEditEventArgs e)
         {
-            PWLogger.Warning($"LiveEdit File Changed: {e.FullPath}");
+            DinoLogger.Warning($"LiveEdit File Changed: {e.FullPath}");
             LiveEdit.TryReadFileContent(e.FullPath, (content) =>
             {
                 ReadFileContent(e.FullPath, content);
@@ -28,7 +28,7 @@ namespace ProgressionGear.ProgressionLock
 
         private void FileDeleted(LiveEditEventArgs e)
         {
-            PWLogger.Warning($"LiveEdit File Removed: {e.FullPath}");
+            DinoLogger.Warning($"LiveEdit File Removed: {e.FullPath}");
 
             _fileToData.Remove(e.FullPath);
             RefreshLocks();
@@ -36,7 +36,7 @@ namespace ProgressionGear.ProgressionLock
 
         private void FileCreated(LiveEditEventArgs e)
         {
-            PWLogger.Warning($"LiveEdit File Created: {e.FullPath}");
+            DinoLogger.Warning($"LiveEdit File Created: {e.FullPath}");
             LiveEdit.TryReadFileContent(e.FullPath, (content) =>
             {
                 ReadFileContent(e.FullPath, content);
@@ -54,8 +54,8 @@ namespace ProgressionGear.ProgressionLock
             }
             catch (JsonException ex)
             {
-                PWLogger.Error("Error parsing progression lock json " + file);
-                PWLogger.Error(ex.Message);
+                DinoLogger.Error("Error parsing progression lock json " + file);
+                DinoLogger.Error(ex.Message);
             }
 
             if (dataList == null) return;
@@ -71,7 +71,7 @@ namespace ProgressionGear.ProgressionLock
             string DEFINITION_PATH = Path.Combine(MTFOWrapper.CustomPath, EntryPoint.MODNAME, "ProgressionLocks");
             if (!Directory.Exists(DEFINITION_PATH))
             {
-                PWLogger.Log("No ProgressionLocks directory detected. Creating template.");
+                DinoLogger.Log("No ProgressionLocks directory detected. Creating template.");
                 Directory.CreateDirectory(DEFINITION_PATH);
                 var file = File.CreateText(Path.Combine(DEFINITION_PATH, "Template.json"));
                 file.WriteLine(PWJson.Serialize(ProgressionLockData.Template));
@@ -79,7 +79,7 @@ namespace ProgressionGear.ProgressionLock
                 file.Close();
             }
             else
-                PWLogger.Log("ProgressionLocks directory detected.");
+                DinoLogger.Log("ProgressionLocks directory detected.");
 
             foreach (string confFile in Directory.EnumerateFiles(DEFINITION_PATH, "*.json", SearchOption.AllDirectories))
             {

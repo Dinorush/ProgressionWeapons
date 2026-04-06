@@ -1,13 +1,14 @@
-﻿using ProgressionGear.JSON;
-using ProgressionGear.Utils;
-using GTFO.API.Utilities;
+﻿using GTFO.API.Utilities;
 using MTFO.API;
+using ProgressionGear.Dependencies;
+using ProgressionGear.JSON;
+using ProgressionGear.Utils;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Diagnostics.CodeAnalysis;
-using ProgressionGear.Dependencies;
+using static Il2CppSystem.Globalization.CultureInfo;
 
 namespace ProgressionGear.ProgressionLock
 {
@@ -16,13 +17,13 @@ namespace ProgressionGear.ProgressionLock
         public static readonly GearToggleManager Current = new();
 
         private readonly Dictionary<string, List<GearToggleData>> _fileToData = new();
-        private readonly Dictionary<uint, ToggleInfo> _toggleInfos = new();
+        private readonly Dictionary<uint, ToggleInfo> _idToInfo = new();
 
         private readonly LiveEditListener _liveEditListener;
 
         private void FileChanged(LiveEditEventArgs e)
         {
-            PWLogger.Warning($"LiveEdit File Changed: {e.FullPath}");
+            DinoLogger.Warning($"LiveEdit File Changed: {e.FullPath}");
             LiveEdit.TryReadFileContent(e.FullPath, (content) =>
             {
                 ReadFileContent(e.FullPath, content);
@@ -31,7 +32,7 @@ namespace ProgressionGear.ProgressionLock
 
         private void FileDeleted(LiveEditEventArgs e)
         {
-            PWLogger.Warning($"LiveEdit File Removed: {e.FullPath}");
+            DinoLogger.Warning($"LiveEdit File Removed: {e.FullPath}");
 
             _fileToData.Remove(e.FullPath);
             ResetToggleInfos();
@@ -40,7 +41,7 @@ namespace ProgressionGear.ProgressionLock
 
         private void FileCreated(LiveEditEventArgs e)
         {
-            PWLogger.Warning($"LiveEdit File Created: {e.FullPath}");
+            DinoLogger.Warning($"LiveEdit File Created: {e.FullPath}");
             LiveEdit.TryReadFileContent(e.FullPath, (content) =>
             {
                 ReadFileContent(e.FullPath, content);
@@ -58,8 +59,8 @@ namespace ProgressionGear.ProgressionLock
             }
             catch (JsonException ex)
             {
-                PWLogger.Error("Error parsing progression lock json " + file);
-                PWLogger.Error(ex.Message);
+                DinoLogger.Error("Error parsing progression lock json " + file);
+                DinoLogger.Error(ex.Message);
             }
 
             if (dataList == null) return;
@@ -77,15 +78,15 @@ namespace ProgressionGear.ProgressionLock
             string DEFINITION_PATH = Path.Combine(MTFOWrapper.CustomPath, EntryPoint.MODNAME, "GearToggle");
             if (!Directory.Exists(DEFINITION_PATH))
             {
-                PWLogger.Log("No GearToggle directory detected. Creating template.");
+                DinoLogger.Log("No GearToggle directory detected. Creating template.");
                 Directory.CreateDirectory(DEFINITION_PATH);
                 var file = File.CreateText(Path.Combine(DEFINITION_PATH, "Template.json"));
-                file.WriteLine(PWJson.Serialize(new List<GearToggleData>() { new() }));
+                file.WriteLine(PWJson.Serialize(GearToggleData.Template));
                 file.Flush();
                 file.Close();
             }
             else
-                PWLogger.Log("GearToggle directory detected.");
+                DinoLogger.Log("GearToggle directory detected.");
 
             foreach (string confFile in Directory.EnumerateFiles(DEFINITION_PATH, "*.json", SearchOption.AllDirectories))
             {
@@ -104,10 +105,10 @@ namespace ProgressionGear.ProgressionLock
             MTFOHotReloadAPI.OnHotReload += ResetToggleInfos;
         }
 
-        public bool IsVisibleID(uint id) => !_toggleInfos.TryGetValue(id, out var toggleInfo) || toggleInfo.ids[0] == id;
-        public bool HasRelatedIDs(uint id) => _toggleInfos.ContainsKey(id);
-        public ToggleInfo GetToggleInfo(uint id) => _toggleInfos.GetValueOrDefault(id);
-        public bool TryGetToggleInfo(uint id, [MaybeNullWhen(false)] out ToggleInfo toggleInfo) => _toggleInfos.TryGetValue(id, out toggleInfo);
+        public bool IsVisibleID(uint id) => !_idToInfo.TryGetValue(id, out var toggleInfo) || toggleInfo.ids[0] == id;
+        public bool HasRelatedIDs(uint id) => _idToInfo.ContainsKey(id);
+        public ToggleInfo GetToggleInfo(uint id) => _idToInfo.GetValueOrDefault(id);
+        public bool TryGetToggleInfo(uint id, [MaybeNullWhen(false)] out ToggleInfo toggleInfo) => _idToInfo.TryGetValue(id, out toggleInfo);
 
         public List<GearToggleData> GetData()
         {
@@ -122,17 +123,17 @@ namespace ProgressionGear.ProgressionLock
 
         public void RemoveFromToggleInfos(uint id)
         {
-            if (!_toggleInfos.TryGetValue(id, out ToggleInfo toggleInfo)) return;
+            if (!_idToInfo.TryGetValue(id, out ToggleInfo info)) return;
 
-            toggleInfo.ids.Remove(id);
-            if (toggleInfo.ids.Count == 1)
-                _toggleInfos.Remove(toggleInfo.ids[0]);
-            _toggleInfos.Remove(id);
+            info.ids.Remove(id);
+            if (info.ids.Count == 1)
+                _idToInfo.Remove(info.ids[0]);
+            _idToInfo.Remove(id);
         }
 
         public void ResetToggleInfos()
         {
-            _toggleInfos.Clear();
+            _idToInfo.Clear();
             HashSet<uint> seen = new();
 
             var enumerator = GetEnumerator();
@@ -149,16 +150,16 @@ namespace ProgressionGear.ProgressionLock
                     if (seen.Add(id))
                         relatedIDs.Add(id);
                     else
-                        PWLogger.Warning($"Duplicate ID {id} detected in toggle data. Removed from {data.Name}");
+                        DinoLogger.Warning($"Duplicate ID {id} detected in toggle data. Removed from {data.Name}");
                 }
                 if (relatedIDs.Count <= 1) continue;
 
                 RemoveInvalidGear(relatedIDs, data.Name);
                 if (relatedIDs.Count <= 1) continue;
 
-                ToggleInfo toggleInfo = new() { ids = relatedIDs, text = data.ButtonText };
+                ToggleInfo toggleInfo = new() { ids = relatedIDs, text = data.ButtonText, reverse = data.ReverseOrder };
                 foreach (uint id in relatedIDs)
-                    _toggleInfos[id] = toggleInfo;
+                    _idToInfo[id] = toggleInfo;
             }
         }
 
@@ -178,14 +179,14 @@ namespace ProgressionGear.ProgressionLock
                         uint id = relatedIDs[i];
                         if (!loadedGears.ContainsKey(id))
                         {
-                            PWLogger.Warning($"ID {id} removed from toggle data {name} since it is not of type {inventorySlot}");
+                            DinoLogger.Warning($"ID {id} removed from toggle data {name} since it is not of type {inventorySlot}");
                             relatedIDs.RemoveAt(i);
                         }
                     }
                     return;
                 }
                 // ID not found on any loaded gear slot. Does not exist.
-                PWLogger.Warning($"ID {relatedIDs[0]} removed from toggle data {name} since it does not exist.");
+                DinoLogger.Warning($"ID {relatedIDs[0]} removed from toggle data {name} since it does not exist.");
                 relatedIDs.RemoveAt(0);
             }
         }
@@ -194,6 +195,7 @@ namespace ProgressionGear.ProgressionLock
     public struct ToggleInfo
     {
         public List<uint> ids;
-        public Localization.LocalizedText text;
+        public Localization.LocalizedText[] text;
+        public bool reverse;
     }
 }

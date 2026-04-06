@@ -28,8 +28,8 @@ namespace ProgressionGear.JSON
                     case "unlocklayoutids":
                     case "unlocktiers":
                     case "unlock":
-                        if (PWJson.TryDeserialize<List<ProgressionRequirement>>(ref reader, out var unlocks))
-                            data.Unlock.AddRange(unlocks);
+                        if (PWJson.TryDeserialize<List<ProgressionRequirement>>(ref reader, out var unlocks, options))
+                            data.Unlock = unlocks;
                         break;
                     case "unlockrequired":
                         if (reader.TokenType != JsonTokenType.Number) throw new JsonException("Expected number for UnlockRequired");
@@ -38,8 +38,8 @@ namespace ProgressionGear.JSON
                     case "locklayoutids":
                     case "locktiers":
                     case "lock":
-                        if (PWJson.TryDeserialize<List<ProgressionRequirement>>(ref reader, out var locks))
-                            data.Lock.AddRange(locks);
+                        if (PWJson.TryDeserialize<List<ProgressionRequirement>>(ref reader, out var locks, options))
+                            data.Lock = locks;
                         break;
                     case "lockrequired":
                         if (reader.TokenType != JsonTokenType.Number) throw new JsonException("Expected number for LockRequired");
@@ -50,7 +50,7 @@ namespace ProgressionGear.JSON
                         data.MissingLevelDefault = reader.GetBoolean();
                         break;
                     case "offlineids":
-                        if (PWJson.TryDeserialize<List<uint>>(ref reader, out var ids))
+                        if (PWJson.TryDeserialize<List<uint>>(ref reader, out var ids, options))
                             data.OfflineIDs = ids;
                         break;
                     case "priority":

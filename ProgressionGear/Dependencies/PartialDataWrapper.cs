@@ -1,5 +1,4 @@
 ﻿using BepInEx.Unity.IL2CPP;
-using ProgressionGear.Utils;
 using System;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -33,7 +32,7 @@ namespace ProgressionGear.Dependencies
                 }
                 catch (Exception e)
                 {
-                    PWLogger.Error($"Exception thrown while reading data from MTFO_Extension_PartialData:\n{e}");
+                    DinoLogger.Error($"Exception thrown while reading data from MTFO_Extension_PartialData:\n{e}");
                 }
             }
         }

@@ -1,7 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
-using ProgressionGear.Utils;
 using ProgressionGear.ProgressionLock;
 using ProgressionGear.Dependencies;
 using ProgressionGear.Patches;
@@ -9,7 +8,7 @@ using Gear;
 
 namespace ProgressionGear;
 
-[BepInPlugin(GUID, MODNAME, "1.5.3")]
+[BepInPlugin(GUID, MODNAME, "1.6.0")]
 [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
 [BepInDependency(MTFOWrapper.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
 [BepInDependency(PartialDataWrapper.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
@@ -22,10 +21,10 @@ internal sealed class EntryPoint : BasePlugin
 
     public override void Load()
     {
-        PWLogger.Log("Loading " + MODNAME);
+        DinoLogger.Log("Loading " + MODNAME);
         if (!MTFOWrapper.HasCustomContent)
         {
-            PWLogger.Error("No MTFO datablocks detected. Not loading ProgressionGear...");
+            DinoLogger.Error("No MTFO datablocks detected. Not loading ProgressionGear...");
             return;
         }
 
@@ -43,7 +42,7 @@ internal sealed class EntryPoint : BasePlugin
         GearToggleManager.Current.Init();
         ProgressionLockManager.Current.Init();
 
-        PWLogger.Log("Loaded " + MODNAME);
+        DinoLogger.Log("Loaded " + MODNAME);
     }
 
     private static void FixGearInstanceDict()

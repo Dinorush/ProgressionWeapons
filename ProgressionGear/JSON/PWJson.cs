@@ -24,6 +24,7 @@ namespace ProgressionGear.JSON
             _settings.Converters.Add(new LocalizedTextConverter());
             _settings.Converters.Add(new ProgressionRequirementConverter());
             _settings.Converters.Add(new ProgressionLockDataConverter());
+            _settings.Converters.Add(new GearToggleDataConverter());
             if (PartialDataWrapper.HasPartialData)
                 _settings.Converters.Add(PartialDataWrapper.PersistentIDConverter!);
         }
@@ -49,6 +50,12 @@ namespace ProgressionGear.JSON
             return value != null;
         }
 
+        public static bool TryDeserialize<T>(ref Utf8JsonReader reader, [MaybeNullWhen(false)] out T value, JsonSerializerOptions options)
+        {
+            value = JsonSerializer.Deserialize<T>(ref reader, options);
+            return value != null;
+        }
+
         public static string Serialize<T>(T value)
         {
             return JsonSerializer.Serialize(value, _settings);
@@ -57,6 +64,17 @@ namespace ProgressionGear.JSON
         public static void Serialize<T>(Utf8JsonWriter writer, T value)
         {
             JsonSerializer.Serialize(writer, value, _settings);
+        }
+
+        public static void Serialize<T>(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value, options);
+        }
+
+        public static void Serialize<T>(Utf8JsonWriter writer, string name, T value, JsonSerializerOptions options)
+        {
+            writer.WritePropertyName(name);
+            JsonSerializer.Serialize(writer, value, options);
         }
     }
 }

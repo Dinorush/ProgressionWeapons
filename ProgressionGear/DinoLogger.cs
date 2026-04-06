@@ -1,8 +1,8 @@
 ﻿using BepInEx.Logging;
 
-namespace ProgressionGear.Utils
+namespace ProgressionGear
 {
-    internal static class PWLogger
+    internal static class DinoLogger
     {
         private static ManualLogSource logger = Logger.CreateLogSource(EntryPoint.MODNAME);
 
