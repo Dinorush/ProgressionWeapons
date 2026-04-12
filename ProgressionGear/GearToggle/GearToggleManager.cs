@@ -8,7 +8,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using static Il2CppSystem.Globalization.CultureInfo;
 
 namespace ProgressionGear.ProgressionLock
 {

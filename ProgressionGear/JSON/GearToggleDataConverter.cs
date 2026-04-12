@@ -94,7 +94,7 @@ namespace ProgressionGear.JSON
             if (value == null) return;
 
             writer.WriteStartObject();
-            PWJson.Serialize(writer, nameof(value.OfflineIDs), value, options);
+            PWJson.Serialize(writer, nameof(value.OfflineIDs), value.OfflineIDs, options);
             if (value.ButtonText.Length > 1)
             {
                 writer.WriteStartArray(nameof(value.ButtonText));
