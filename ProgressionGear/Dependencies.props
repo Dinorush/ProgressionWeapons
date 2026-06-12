@@ -25,10 +25,6 @@
         <Reference Remove="$(GameAssembliesFolder)/netstandard.dll" />
         <Reference Remove="$(GameAssembliesFolder)/mscorlib.dll" />
         <Reference Remove="$(GameAssembliesFolder)/Newtonsoft.Json.dll" />
-
-		<!-- Base Assemblies -->
-		<Reference Include="$(CorLibsFolder)\*.dll" Private="false" />
-		<Reference Include="$(DotNetFolder)\System.Private.CoreLib.dll" Private="false" />
     </ItemGroup>
 
 	<!-- Plugins -->

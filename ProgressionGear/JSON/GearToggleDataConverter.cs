@@ -1,4 +1,4 @@
-﻿using ProgressionGear.ProgressionLock;
+﻿using ProgressionGear.GearToggle;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;

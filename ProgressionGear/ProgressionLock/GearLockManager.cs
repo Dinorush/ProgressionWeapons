@@ -4,6 +4,7 @@ using Player;
 using System.Collections.Generic;
 using System.Linq;
 using ProgressionGear.Dependencies;
+using ProgressionGear.GearToggle;
 
 namespace ProgressionGear.ProgressionLock
 {

@@ -2,6 +2,7 @@
 using MTFO.API;
 using ProgressionGear.Dependencies;
 using ProgressionGear.JSON;
+using ProgressionGear.ProgressionLock;
 using ProgressionGear.Utils;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -9,7 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace ProgressionGear.ProgressionLock
+namespace ProgressionGear.GearToggle
 {
     public sealed class GearToggleManager
     {

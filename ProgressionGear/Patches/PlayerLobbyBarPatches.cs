@@ -3,6 +3,7 @@ using Gear;
 using HarmonyLib;
 using Player;
 using ProgressionGear.Dependencies;
+using ProgressionGear.GearToggle;
 using ProgressionGear.ProgressionLock;
 using ProgressionGear.Utils;
 using System;
@@ -15,13 +16,10 @@ namespace ProgressionGear.Patches
     [HarmonyPatch]
     internal static class PlayerLobbyBarPatches
     {
-        private static readonly Vector3 SingleButtonPos = new(-300, -320, -1);
-        private static readonly Vector2 SingleColliderSize = new(290f, 56f);
-        private static readonly Vector2 SingleButtonSize = new(270f, 47f);
-        private static readonly (Vector3 left, Vector3 right) DoubleButtonPos = (new(-435, -320, -1), new(-165, -320, -1));
-        private static readonly Vector2 DoubleButtonSize = new(270f * DoubleSizeMod, 47f);
-        private static readonly Vector2 DoubleColliderSize = new(290f * DoubleSizeMod, 56f);
-        private const float DoubleSizeMod = 0.8f;
+        private static readonly Vector3 SingleButtonPos = new(360, -800, -2);
+        private static readonly Vector3 DoubleButtonPos = new(500, -800, -2);
+        private static readonly Vector3 SingleColliderOffset = new(90, -6.5f);
+        private static readonly Vector3 DoubleColliderOffset = new(100, -6.5f);
 
         // In some cases (join in progress) SetActiveExpedition doesn't seem to be called? Hopefully this fixes it.
         [HarmonyPatch(typeof(CM_PlayerLobbyBar), nameof(CM_PlayerLobbyBar.ShowWeaponSelectionPopup))]
@@ -76,38 +74,54 @@ namespace ProgressionGear.Patches
         struct ButtonInfo
         {
             public GameObject go;
-            public CM_Item item;
-            public Transform box;
+            public CM_ScrollWindowHeader item;
+            public BoxCollider2D collider;
             public TextMeshPro text;
 
-            public readonly void SetSize(bool isDouble)
+            public readonly void SetMode(bool isDouble)
             {
                 if (isDouble)
                 {
-                    item.SetSize(DoubleButtonSize);
-                    item.m_collider.size = DoubleColliderSize;
-                    box.localScale = new Vector3(DoubleSizeMod, 1f, 1f);
+                    go.transform.localPosition = DoubleButtonPos;
+                    collider.offset = DoubleColliderOffset;
                 }
                 else
                 {
-                    item.SetSize(SingleButtonSize);
-                    item.m_collider.size = SingleColliderSize;
-                    box.localScale = Vector3.one;
+                    go.transform.localPosition = SingleButtonPos;
+                    collider.offset = SingleColliderOffset;
                 }
             }
         }
 
         private static ButtonInfo _leftButton;
         private static ButtonInfo _rightButton;
+        private static CM_PlayerLobbyBar? _activeBar;
+
+        [HarmonyPatch(typeof(CM_ScrollWindow), nameof(CM_ScrollWindow.Setup), new Type[] { })]
+        [HarmonyWrapSafe]
+        [HarmonyPostfix]
+        private static void Post_LobbyBarSetup(CM_ScrollWindow __instance)
+        {
+            if (_rightButton.go != null) return;
+
+            CreateButton(__instance, ref _rightButton, true);
+            CreateButton(__instance, ref _leftButton, false);
+        }
 
         [HarmonyPatch(typeof(CM_PlayerLobbyBar), nameof(CM_PlayerLobbyBar.ShowWeaponSelectionPopup))]
         [HarmonyWrapSafe]
         [HarmonyPostfix]
         private static void Post_LoadoutMenuOpened(CM_PlayerLobbyBar __instance)
         {
-            CreateButton(__instance, ref _rightButton, ButtonPressedCallback(__instance, true));
-            CreateButton(__instance, ref _leftButton, ButtonPressedCallback(__instance, false));
+            var window = __instance.m_popupScrollWindow;
+            _rightButton.go.transform.SetParent(window.transform, false);
+            _leftButton.go.transform.SetParent(window.transform, false);
+            _rightButton.go.transform.localPosition = DoubleButtonPos;
+            _leftButton.go.transform.localPosition = DoubleButtonPos;
+            window.AddNonContentItem(_rightButton.item);
+            window.AddNonContentItem(_leftButton.item);
 
+            _activeBar = __instance;
             // Need to manually call this since it's not called in every case we need it to be
             if (__instance.selectedWeaponSlotItem != null)
                 Post_LoadoutItemSelected(__instance.selectedWeaponSlotItem);
@@ -127,19 +141,15 @@ namespace ProgressionGear.Patches
                 if (toggleInfo.text.Length > 1)
                 {
                     _rightButton.go.SetActive(true);
-                    _rightButton.go.transform.localPosition = DoubleButtonPos.right;
-                    _rightButton.SetSize(true);
+                    _rightButton.SetMode(true);
                     _rightButton.text.SetText(toggleInfo.text[0]);
                     _leftButton.go.SetActive(true);
-                    _leftButton.go.transform.localPosition = DoubleButtonPos.left;
-                    _leftButton.SetSize(true);
                     _leftButton.text.SetText(toggleInfo.text[1]);
                 }
                 else
                 {
                     _rightButton.go.SetActive(true);
-                    _rightButton.go.transform.localPosition = SingleButtonPos;
-                    _rightButton.SetSize(false);
+                    _rightButton.SetMode(false);
                     _rightButton.text.SetText(toggleInfo.text[0]);
                     _leftButton.go.SetActive(false);
                 }
@@ -151,26 +161,43 @@ namespace ProgressionGear.Patches
             }
         }
 
-        private static void CreateButton(CM_PlayerLobbyBar __instance, ref ButtonInfo button, Action<int> onPressed)
+        private static void CreateButton(CM_ScrollWindow window, ref ButtonInfo button, bool right)
         {
-            CM_ScrollWindowInfoBox infoBox = __instance.m_popupScrollWindow.InfoBox;
-            // Need to instantiate a new button every time since the window is instantiated every time
-            button.go = GameObject.Instantiate(CM_PageLoadout.Current.m_copyLobbyIdButton.gameObject, infoBox.transform);
-            var item = button.item = button.go.GetComponent<CM_Item>();
-            button.text = item.m_texts[0];
-            button.box = button.go.transform.GetChild(0);
+            button.go = GameObject.Instantiate(window.m_headers[0].gameObject);
+            button.go.name = "PG_" + (right ? "Right" : "Left");
+            var item = button.item = button.go.GetComponent<CM_ScrollWindowHeader>();
+            item.SetSelected(false);
 
-            item.transform.localPosition = new(-300, -320, -1);
-            item.m_clickBlink = Configuration.ToggleBlink;
+            var transform = button.go.transform;
+            transform.localScale = Vector3.one * 1.5f;
+            transform.Rotate(0, right ? 180 : 0, 180);
+
+            var bg = transform.GetChild(0);
+            bg.localPosition = new(5, -25, 0);
+            bg.GetComponent<SpriteRenderer>().size = new(2600, 29);
+
+            var text = transform.GetChild(1);
+            text.Rotate(0, right ? 180 : 0, 180);
+            text.localPosition = right ? new(-10, -5, 0) : new(185, -5, 0);
+            button.text = item.m_texts[0];
+            button.text.alignment = TextAlignmentOptions.Midline;
+
+            var headline = transform.GetChild(2);
+            headline.localScale = new(0.8f, 1f, 1f);
+
+            button.collider = item.m_collider;
+            button.collider.size = new(200, 40f);
+            button.collider.offset = DoubleColliderOffset;
+
             item.OnBtnPressCallback = null;
-            item.add_OnBtnPressCallback(onPressed);
+            item.add_OnBtnPressCallback(ButtonPressedCallback(right));
         }
 
-        private static Action<int> ButtonPressedCallback(CM_PlayerLobbyBar __instance, bool toNext)
+        private static Action<int> ButtonPressedCallback(bool toNext)
         {
             return (id) =>
             {
-                CM_InventorySlotItem? slotItem = __instance.selectedWeaponSlotItem ?? _cachedItem;
+                CM_InventorySlotItem? slotItem = _activeBar!.selectedWeaponSlotItem ?? _cachedItem;
                 if (slotItem == null) return;
 
                 uint offlineID = slotItem.m_gearID.GetOfflineID();
@@ -182,7 +209,7 @@ namespace ProgressionGear.Patches
                 if (GearManager.TryGetGear("OfflineGear_ID_" + nextID, out var newRange))
                 {
                     slotItem.LoadData(newRange, true, true);
-                    __instance.OnWeaponSlotItemSelected(slotItem);
+                    _activeBar.OnWeaponSlotItemSelected(slotItem);
                 }
                 else
                     DinoLogger.Error($"Couldn't swap to next weapon ({nextID}) in toggle list!");

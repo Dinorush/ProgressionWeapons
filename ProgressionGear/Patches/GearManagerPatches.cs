@@ -2,6 +2,7 @@
 using Gear;
 using HarmonyLib;
 using Player;
+using ProgressionGear.GearToggle;
 using ProgressionGear.ProgressionLock;
 using ProgressionGear.Utils;
 using System.Collections.Generic;

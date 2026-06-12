@@ -5,6 +5,7 @@ using ProgressionGear.ProgressionLock;
 using ProgressionGear.Dependencies;
 using ProgressionGear.Patches;
 using Gear;
+using ProgressionGear.GearToggle;
 
 namespace ProgressionGear;
 
@@ -21,7 +22,6 @@ internal sealed class EntryPoint : BasePlugin
 
     public override void Load()
     {
-        DinoLogger.Log("Loading " + MODNAME);
         if (!MTFOWrapper.HasCustomContent)
         {
             DinoLogger.Error("No MTFO datablocks detected. Not loading ProgressionGear...");

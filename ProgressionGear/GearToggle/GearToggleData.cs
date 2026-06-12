@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ProgressionGear.ProgressionLock
+namespace ProgressionGear.GearToggle
 {
     public sealed class GearToggleData
     {
