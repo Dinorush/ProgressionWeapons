@@ -108,6 +108,18 @@ namespace ProgressionGear.Patches
             CreateButton(__instance, ref _leftButton, false);
         }
 
+        [HarmonyPatch(typeof(CM_ScrollWindow), nameof(CM_ScrollWindow.ResetHeaders))]
+        [HarmonyWrapSafe]
+        [HarmonyPostfix]
+        private static void Post_ResetHeaders()
+        {
+            if (_rightButton.go == null) return;
+
+            _rightButton.go.SetActive(false);
+            _leftButton.go.SetActive(false);
+        }
+        
+
         [HarmonyPatch(typeof(CM_PlayerLobbyBar), nameof(CM_PlayerLobbyBar.ShowWeaponSelectionPopup))]
         [HarmonyWrapSafe]
         [HarmonyPostfix]
