@@ -201,6 +201,8 @@ namespace ProgressionGear.Patches
             button.collider.size = new(200, 40f);
             button.collider.offset = DoubleColliderOffset;
 
+            button.go.SetActive(false);
+
             item.OnBtnPressCallback = null;
             item.add_OnBtnPressCallback(ButtonPressedCallback(right));
         }
